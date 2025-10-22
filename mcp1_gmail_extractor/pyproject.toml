@@ -1,0 +1,13 @@
+[project]
+name = "mcp1-gmail-extractor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=2.12.5",
+    "google-api-python-client>=2.185.0",
+    "google-auth>=2.41.1",
+    "google-auth-oauthlib>=1.2.2",
+    "mcp[cli]>=1.16.0",
+]

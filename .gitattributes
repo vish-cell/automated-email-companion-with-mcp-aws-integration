@@ -1,0 +1,11 @@
+# Auto-normalize text files
+* text=auto
+
+# Keep Python files normalized
+*.py text eol=lf
+
+# Treat binary files as binary
+*.png binary
+*.jpg binary
+*.pdf binary
+*.exe binary

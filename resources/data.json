@@ -1,0 +1,26 @@
+{
+  "id": "7cd7031f-b052-4628-9047-fa7bea309dae",
+  "date": "Wed, 22 Oct 2025 21:03:04 +0530",
+  "subject": "Comprehensive Project Log: AWS Email Webhook and MCP Integration Roadmap",
+  "from": "Vishal G <vishal2k4gopal@gmail.com>",
+  "to": "Vishal G 22MIS1045 <vishal.g2022@vitstudent.ac.in>",
+  "cc": "",
+  "reply_to": "noreply@system.com",
+  "priority": "High",
+  "body": "This document serves as the formal project log detailing the configuration\r\nand function of our newly established AWS serverless email processing\r\npipeline and outlining the subsequent development phase focused on Model\r\nContext Protocol (MCP) integration. This foundational work ensures the MCP\r\nserver has reliable, real-time access to clean email data without handling\r\ncomplex external authentication protocols.\r\n\r\n*Phase 1: AWS Serverless Email Trigger Pipeline*\r\n\r\nThe core architectural decision was to decouple the email receipt process\r\nfrom the application server using a reliable, event-driven mechanism. Our\r\narchitecture involves four key AWS services working in tandem. First, *Amazon\r\nSimple Email Service (SES)* serves as the entry point for all incoming\r\nemail directed at our designated domain. We have configured it exclusively\r\nfor email receiving, completing domain verification, MX record setup, and\r\ncreating a robust receipt rule set that handles spam and virus filtering,\r\nensuring secure processing of mail for verified recipients.\r\n\r\nSecond, *Amazon S3 (Simple Storage Service)* acts as the persistence layer.\r\nTo handle SES payload limitations and ensure durability, the SES receipt\r\nrule stores the full email (headers and attachments) in S3. This guarantees\r\nsecure storage and provides our Lambda function with a reference point\r\ninstead of including the entire email in the trigger event.\r\n\r\nThird, *Amazon SNS (Simple Notification Service)* serves as the event\r\ntrigger. The SES receipt rule publishes a minimal JSON payload to an SNS\r\ntopic, containing metadata including the S3 object key. SNS decouples email\r\nreceipt from processing, ensuring events are retained and retried in case\r\nof Lambda failure.\r\n\r\nFourth, *AWS Lambda* functions as the transformation engine. Subscribed to\r\nthe SNS topic, it retrieves the raw email from S3 using the provided key,\r\ndecodes the MIME structure, extracts headers (From, To, Subject, Date),\r\nnormalizes the plain text body, logs attachment metadata, and writes the\r\nstructured JSON to Firestore collections (recent_mail and history_mail).\r\nLogging is handled via CloudWatch for production monitoring.\r\n\r\n*Phase 2: Future Learning and Model Context Protocol (MCP) Integration*\r\n\r\nThe next phase leverages this clean data stream for the MCP server,\r\nallowing the AI client to use email context effectively. This involves\r\ndeveloping a custom MCP server exposing email data as an MCP resource and\r\ncreating MCP tools that let the AI act on email data (e.g., a replyToEmail\r\ntool that drafts responses using Gemini and sends them via SES). The MCP\r\nserver will manage state and conversational context, providing full thread\r\nhistory to prevent misinterpretation. Additionally, advanced attachment\r\nhandling will allow processing or summarizing attachments (e.g., using AWS\r\nTextract or an LLM for PDFs) before providing the results to the AI client.\r\n\r\nThis two-phase approach ensures a secure, scalable email ingestion process\r\nnow, paving the way for sophisticated, context-aware AI interactions via\r\nMCP in the future.\r\n",
+  "body_type": "text/plain",
+  "attachments": [
+    {
+      "filename": "amazonq-developer-ug.pdf",
+      "mime_type": "application/pdf",
+      "size_bytes": 13471800,
+      "relative_path": "pdf\\amazonq-developer-ug.pdf"
+    },
+    {
+      "filename": "AWS_Architecture_Diagram_V2.png",
+      "mime_type": "image/png",
+      "size_bytes": 75659,
+      "relative_path": "image\\AWS_Architecture_Diagram_V2.png"
+    }
+  ]
+}

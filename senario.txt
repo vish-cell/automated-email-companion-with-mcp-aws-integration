@@ -1,0 +1,31 @@
+)   Meeting Completion
+        After a meeting concludes, a company representative drafts and sends a summary email through Outlook.
+        The email contains details such as discussion points, decisions, and technical topics covered in the meeting.
+
+2)  Email Reception in Outlook
+        The summary email reaches the recipient’s Outlook inbox.
+        Outlook serves as the primary data source for the system.
+
+3)  MCP Server 1 – Context Extraction
+        MCP 1 connects to Outlook using the Microsoft Graph API.
+
+        It automatically fetches all meeting summary emails within a specified date range.
+        MCP 1 extracts key information such as context, topics, and keywords from the email body.
+
+4)  MCP Server 2 – Knowledge Enrichment
+        The processed summary from MCP 1 is sent to MCP 2.
+
+        MCP 2 searches through AWS Documentation and relevant online sources.
+        It identifies and ranks related articles, SDK links, and technical resources that match the meeting’s discussion topics.
+
+5)  Frontend / Dashboard – Information Display
+        The frontend presents:
+            a) The original meeting summary (fetched from Outlook)
+            b) The recommended AWS documents and resources (provided by MCP 2)
+            c) An auto-generated draft email suggesting follow-up actions 
+            The user can review, edit, and send this follow-up email directly.
+
+Overall Workflow
+    Outlook → MCP 1 (fetch + analyze) → MCP 2 (enrich + recommend) → Frontend (display + interaction)
+    This pipeline ensures automation, relevance, and professional integration.
+    Since MCP servers already handle workflow logic, n8n or external orchestrators are not required.
