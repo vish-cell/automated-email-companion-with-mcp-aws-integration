@@ -141,9 +141,24 @@ def fetch_meeting_summaries(sender_email: str, ctx: Context[ServerSession, None]
 # ----------------- Tool: Send to MCP2 -----------------
 @mcp.tool()
 def send_to_mcp2(payload: dict, ctx: Context[ServerSession, None]):
-    ctx.info("Sending payload to MCP2:")
-    ctx.debug(payload)
-    return {"status": "success", "emails_sent": len(payload.get("emails", []))}
+    ctx.info("Preparing data to send to MCP2...")
+
+    # Only extract keywords + attachment paths
+    emails = payload.get("emails", [])
+    filtered_payload = []
+
+    for email in emails:
+        filtered_payload.append({
+            "email_id": email.get("id"),
+            "subject": email.get("subject"),
+            "keywords": email.get("keywords", []),
+            "resources": [att["relative_path"] for att in email.get("attachments", [])]
+        })
+
+    ctx.debug(filtered_payload)
+    ctx.info(f"Sending {len(filtered_payload)} emails (keywords + resources) to MCP2.")
+    return {"status": "success", "emails_sent": len(filtered_payload), "data": filtered_payload}
+
 
 # ----------------- Tool: Get structured email details -----------------
 @mcp.tool()
