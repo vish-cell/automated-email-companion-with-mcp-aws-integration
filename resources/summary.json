@@ -1,19 +1,37 @@
 {
-  "summary": "Fallback summary: no external APIs available.",
+  "summary": "🧩 Summary based on keywords: aws, email, serverless.\n\nNo attachment content found.",
   "keywords": [
+    "aws",
     "email",
-    "phase",
-    "context",
-    "server",
-    "receipt",
-    "processing",
-    "using",
-    "serves"
+    "serverless"
   ],
-  "attachments": [
-    "pdf\\amazonq-developer-ug.pdf",
-    "image\\AWS_Architecture_Diagram_V2.png"
+  "attachments": [],
+  "youtube_videos": [
+    {
+      "title": "when your serverless computing bill goes parabolic...",
+      "url": "https://www.youtube.com/watch?v=SCIfWhAheVw",
+      "views": 947371
+    },
+    {
+      "title": "How to Set Up Amazon SES to Send Emails from Any Application",
+      "url": "https://www.youtube.com/watch?v=VWt43MXhuk4",
+      "views": 145903
+    },
+    {
+      "title": "How to send an email with Amazon SES and Serverless - tutorial",
+      "url": "https://www.youtube.com/watch?v=4o6GCiUX8Xk",
+      "views": 27631
+    },
+    {
+      "title": "Build a Serverless Email Marketing Application in 30 Minutes! | AWS Project Step-by-Step Tutorial",
+      "url": "https://www.youtube.com/watch?v=hK0ztmWCBA8",
+      "views": 24938
+    },
+    {
+      "title": "Email Notification service | AWS | Think Serverless | AWS SNS",
+      "url": "https://www.youtube.com/watch?v=70lP5Jw3td4",
+      "views": 763
+    }
   ],
-  "youtube_videos": [],
   "web_resources": []
 }
