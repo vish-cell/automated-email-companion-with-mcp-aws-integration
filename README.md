@@ -52,6 +52,8 @@ Outputs
 -------
 - resources/data.json — created by get_email_details.
 - resources/summary.json — created by MCP2 summarizer.
+- <img width="911" height="668" alt="image" src="https://github.com/user-attachments/assets/d721d46c-7b71-4ef9-90de-a9541d5bce63" />
+
 
 Troubleshooting
 ---------------
