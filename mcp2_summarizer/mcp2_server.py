@@ -13,15 +13,21 @@ TOKEN_PATH = "../secrets/token_mcp2.pickle"
 # ----------------- Load YouTube + Google CSE keys -----------------
 KEY_FILE = "../secrets/mcp2.json"
 if not os.path.exists(KEY_FILE):
-    raise FileNotFoundError(f"❌ API key file not found at expected path: {KEY_FILE}")
+    print(f"⚠️ Warning: API key file not found at expected path: {KEY_FILE}. Continuing without external keys.")
+    key_data = {}
+else:
+    try:
+        with open(KEY_FILE, "r") as f:
+            key_data = json.load(f)
+    except Exception as e:
+        print(f"⚠️ Error reading {KEY_FILE}: {e}. Continuing without external keys.")
+        key_data = {}
 
-with open(KEY_FILE, "r") as f:
-    key_data = json.load(f)
 YOUTUBE_API_KEY = key_data.get("YOUTUBE_API_KEY", "")
 GOOGLE_CX = key_data.get("GOOGLE_CX", "")
 
 if not YOUTUBE_API_KEY:
-    raise ValueError("❌ Missing YOUTUBE_API_KEY in mcp2.json")
+    print("⚠️ YOUTUBE_API_KEY not provided; YouTube enrichment will be skipped.")
 
 # ----------------- Initialize MCP -----------------
 mcp = FastMCP("MCP2_Summarizer")
@@ -189,7 +195,96 @@ def receive_emails(payload: dict, ctx: Context[ServerSession, None]):
     }
 
 
-# ----------------- Main Execution -----------------
 if __name__ == "__main__":
-    print("Starting MCP2 Summarizer Service on port 6278...")
-    mcp.run(port=6278)
+    print("Starting MCP2 Summarizer Service...")
+    mcp.run()
+
+
+
+# ----------------- ASGI adapter (for uvicorn) -----------------
+# Provides a minimal ASGI app that routes POST /tools/summarize_context
+import asyncio as _asyncio
+
+
+class _ASGIContext:
+    """Lightweight adapter used when serving via ASGI to provide info/debug/error methods."""
+    def __init__(self):
+        pass
+    def _safe_print(self, prefix, *args, **kwargs):
+        # Printing raw emoji may fail on some Windows consoles (charmap). Encode/replace to avoid exceptions.
+        import sys
+        try:
+            print(prefix, *args, **kwargs)
+        except Exception:
+            text = ' '.join(str(a) for a in args)
+            end = kwargs.get('end', '\n')
+            try:
+                # write bytes to stdout buffer with utf-8 and replace errors
+                sys.stdout.buffer.write((prefix + ' ' + text + end).encode('utf-8', errors='replace'))
+                sys.stdout.flush()
+            except Exception:
+                # final fallback: write ascii-safe replacement
+                safe = (prefix + ' ' + text + end).encode('ascii', errors='replace').decode('ascii')
+                sys.stdout.write(safe)
+                sys.stdout.flush()
+
+    def info(self, *args, **kwargs):
+        self._safe_print('[MCP2 INFO]', *args, **kwargs)
+    def debug(self, *args, **kwargs):
+        self._safe_print('[MCP2 DEBUG]', *args, **kwargs)
+    def error(self, *args, **kwargs):
+        self._safe_print('[MCP2 ERROR]', *args, **kwargs)
+
+
+async def _read_body(receive):
+    body = b""
+    more_body = True
+    while more_body:
+        message = await receive()
+        if message.get("type") != "http.request":
+            break
+        body += message.get("body", b"")
+        more_body = message.get("more_body", False)
+    return body
+
+
+async def app(scope, receive, send):
+    # Only handle HTTP
+    if scope.get("type") != "http":
+        await send({"type": "http.response.start", "status": 404, "headers": []})
+        await send({"type": "http.response.body", "body": b"Not Found"})
+        return
+
+    method = scope.get("method", "GET").upper()
+    path = scope.get("path", "")
+
+    if method == "POST" and path == "/tools/summarize_context":
+        try:
+            body_bytes = await _read_body(receive)
+            if not body_bytes:
+                payload = {}
+            else:
+                payload = json.loads(body_bytes.decode("utf-8"))
+
+            ctx = _ASGIContext()
+
+            # run summarization in a thread to avoid blocking event loop
+            result = await _asyncio.to_thread(summarize_context, payload, ctx)
+
+            body = json.dumps({"status": "success", "result": result}, ensure_ascii=False).encode("utf-8")
+            headers = [(b"content-type", b"application/json; charset=utf-8")]
+            await send({"type": "http.response.start", "status": 200, "headers": headers})
+            await send({"type": "http.response.body", "body": body})
+        except Exception as e:
+            # On error return 500 and the error text
+            err = {"status": "error", "code": 500, "text": str(e)}
+            body = json.dumps(err, ensure_ascii=False).encode("utf-8")
+            headers = [(b"content-type", b"application/json; charset=utf-8")]
+            await send({"type": "http.response.start", "status": 500, "headers": headers})
+            await send({"type": "http.response.body", "body": body})
+        return
+
+    # Unknown path
+    await send({"type": "http.response.start", "status": 404, "headers": []})
+    await send({"type": "http.response.body", "body": b"Not Found"})
+
