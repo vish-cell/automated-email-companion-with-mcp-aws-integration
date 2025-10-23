@@ -1,0 +1,19 @@
+{
+  "summary": "Fallback summary: no external APIs available.",
+  "keywords": [
+    "email",
+    "phase",
+    "context",
+    "server",
+    "receipt",
+    "processing",
+    "using",
+    "serves"
+  ],
+  "attachments": [
+    "pdf\\amazonq-developer-ug.pdf",
+    "image\\AWS_Architecture_Diagram_V2.png"
+  ],
+  "youtube_videos": [],
+  "web_resources": []
+}

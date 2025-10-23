@@ -1,19 +1,19 @@
 from mcp.server.fastmcp import FastMCP, Context
 from mcp.server.session import ServerSession
-import os, json, re, requests, pickle, docx
+import os, json, requests, pickle, docx
 from PyPDF2 import PdfReader
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # ----------------- Configuration -----------------
 RESOURCE_DIR = os.path.abspath("../resources")
-CLIENT_SECRET_PATH = "secrets/client_secret.json"
-TOKEN_PATH = "secrets/token_mcp2.pickle"
+CLIENT_SECRET_PATH = "../secrets/client_secret.json"
+TOKEN_PATH = "../secrets/token_mcp2.pickle"
 
 # ----------------- Load YouTube + Google CSE keys -----------------
-KEY_FILE = "secrets/mcp2.json"
+KEY_FILE = "../secrets/mcp2.json"
 if not os.path.exists(KEY_FILE):
-    raise FileNotFoundError("❌ youtube_key.json not found! Please create it first.")
+    raise FileNotFoundError(f"❌ API key file not found at expected path: {KEY_FILE}")
 
 with open(KEY_FILE, "r") as f:
     key_data = json.load(f)
@@ -21,7 +21,7 @@ YOUTUBE_API_KEY = key_data.get("YOUTUBE_API_KEY", "")
 GOOGLE_CX = key_data.get("GOOGLE_CX", "")
 
 if not YOUTUBE_API_KEY:
-    raise ValueError("❌ Missing YOUTUBE_API_KEY in youtube_key.json")
+    raise ValueError("❌ Missing YOUTUBE_API_KEY in mcp2.json")
 
 # ----------------- Initialize MCP -----------------
 mcp = FastMCP("MCP2_Summarizer")
@@ -143,20 +143,14 @@ def summarize_context(payload: dict, ctx: Context[ServerSession, None]):
     ctx.info("📩 Received payload from MCP1.")
     keywords = payload.get("keywords", [])
     attachments = payload.get("attachments", [])
+    ctx.info(f"🔑 Keywords received: {keywords}")
+    ctx.info(f"📎 Attachments received: {attachments}")
 
-    # Extract text from attachments
     attachment_texts = [extract_text_from_file(f) for f in attachments]
-
-    # Generate summary
     summary = generate_summary(keywords, attachment_texts)
-
-    # Fetch top YouTube videos
     youtube_videos = fetch_youtube_videos(keywords)
-
-    # Fetch top web resources
     web_resources = fetch_web_resources(keywords)
 
-    # Result dictionary
     result = {
         "summary": summary,
         "keywords": keywords,
@@ -165,7 +159,6 @@ def summarize_context(payload: dict, ctx: Context[ServerSession, None]):
         "web_resources": web_resources
     }
 
-    # Save result to JSON
     os.makedirs(RESOURCE_DIR, exist_ok=True)
     with open(os.path.join(RESOURCE_DIR, "summary.json"), "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
@@ -175,7 +168,28 @@ def summarize_context(payload: dict, ctx: Context[ServerSession, None]):
     return result
 
 
-# ----------------- Main -----------------
+# ----------------- MCP Tool: Receive from MCP1 -----------------
+@mcp.tool()
+def receive_emails(payload: dict, ctx: Context[ServerSession, None]):
+    """
+    Receives structured email data from MCP1 and triggers summarization automatically.
+    """
+    ctx.info("📨 MCP2 received email data from MCP1.")
+    print("\n========== MCP2: RECEIVED PAYLOAD FROM MCP1 ==========\n")
+    print(json.dumps(payload, indent=2))
+    print("\n=====================================================\n")
+
+    # Automatically process the email context
+    result = summarize_context(payload, ctx)
+
+    return {
+        "status": "success",
+        "message": "Data received from MCP1 and summarized successfully.",
+        "summary_result": result
+    }
+
+
+# ----------------- Main Execution -----------------
 if __name__ == "__main__":
-    print("🚀 MCP2 Summarizer running... waiting for keywords + attachments from MCP1.")
-    mcp.run()
+    print("Starting MCP2 Summarizer Service on port 6278...")
+    mcp.run(port=6278)
